@@ -1,0 +1,9 @@
+# Heavy deps for running real models on the AMD GPU pod (ROCm).
+# Torch is usually preinstalled in the pod image; if not, install the ROCm build:
+#   pip install torch --index-url https://download.pytorch.org/whl/rocm6.1
+transformers>=4.44.0
+accelerate>=0.33.0
+pillow>=10.0.0
+sentencepiece>=0.2.0
+# Qwen2-VL image processing helper (optional, depending on chosen VLM)
+# qwen-vl-utils>=0.0.8

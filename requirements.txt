@@ -1,0 +1,7 @@
+# Core pipeline (laptop + container, lightweight)
+requests>=2.31.0
+opencv-python-headless>=4.9.0
+numpy>=1.26.0
+
+# Model providers (installed on the AMD GPU pod; heavy — kept out of the slim container base)
+# Install these only in the GPU/dev environment via requirements-gpu.txt
