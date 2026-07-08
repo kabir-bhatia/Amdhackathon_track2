@@ -37,6 +37,7 @@ def build_style_prompt(description: str, style: str) -> str:
     return (
         f"Video description:\n{description}\n\n"
         f"Task: {instruction}\n"
-        "Stay faithful to the described content. Reply with ONLY the caption text, "
+        "Stay faithful to the described content. Do NOT think out loud, brainstorm, "
+        "list options, or explain — output ONLY the final caption itself, at most 30 words, "
         "no labels, no quotes, no preamble."
     )

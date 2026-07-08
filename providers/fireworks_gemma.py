@@ -10,6 +10,7 @@ import requests
 from agent import config
 
 from .base import LLMProvider
+from .fireworks_common import extract_text, post_chat
 from .prompts import build_style_prompt
 
 
@@ -30,10 +31,9 @@ class FireworksGemmaProvider(LLMProvider):
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": build_style_prompt(description, style)}],
-            "max_tokens": 80,
+            # Headroom so reasoning models finish thinking and still emit the caption.
+            "max_tokens": 1536,
             "temperature": 0.8,
             "top_p": 0.95,
         }
-        resp = requests.post(self.url, headers=self.headers, json=payload, timeout=25)
-        resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"].strip()
+        return extract_text(post_chat(self.url, self.headers, payload))

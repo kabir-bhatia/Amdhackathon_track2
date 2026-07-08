@@ -34,12 +34,14 @@ class CaptioningPipeline:
         return self.vision.describe(frames)
 
     def _style_one(self, description: str, style: str) -> str:
-        try:
-            caption = (self.llm.style(description, style) or "").strip()
-            if caption:
-                return caption
-            log.warning("Empty caption for style=%s; using fallback.", style)
-        except Exception:  # noqa: BLE001 - never drop a required style
-            log.exception("Styling failed for style=%s; using fallback.", style)
+        # Two attempts: reasoning models occasionally return an empty answer.
+        for attempt in range(2):
+            try:
+                caption = (self.llm.style(description, style) or "").strip()
+                if caption:
+                    return caption
+                log.warning("Empty caption for style=%s (attempt %d).", style, attempt + 1)
+            except Exception:  # noqa: BLE001 - never drop a required style
+                log.exception("Styling failed for style=%s (attempt %d).", style, attempt + 1)
         # Fallback keeps the key present and at least content-faithful.
         return description.strip()

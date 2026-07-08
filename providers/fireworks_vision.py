@@ -16,6 +16,7 @@ import requests
 from agent import config
 
 from .base import VisionProvider
+from .fireworks_common import extract_text, post_chat
 from .prompts import VISION_PROMPT
 
 
@@ -51,9 +52,7 @@ class FireworksVisionProvider(VisionProvider):
         payload = {
             "model": self.model,
             "messages": [{"role": "user", "content": content}],
-            "max_tokens": 200,
+            "max_tokens": 1024,
             "temperature": 0.2,
         }
-        resp = requests.post(self.url, headers=self.headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"].strip()
+        return extract_text(post_chat(self.url, self.headers, payload))

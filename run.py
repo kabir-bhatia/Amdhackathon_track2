@@ -18,6 +18,22 @@ import time
 os.environ.setdefault("PYTORCH_HIP_ALLOC_CONF", "expandable_segments:True")
 os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 
+
+def _load_dotenv(path: str = ".env") -> None:
+    """Minimal .env loader for local dev (no dependency). Real env vars win."""
+    if not os.path.exists(path):
+        return
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, val = line.partition("=")
+            os.environ.setdefault(key.strip(), val.strip().strip('"').strip("'"))
+
+
+_load_dotenv()  # must run before `config` reads the environment
+
 from agent import config
 from agent.pipeline import CaptioningPipeline
 from providers.factory import get_llm_provider, get_vision_provider
