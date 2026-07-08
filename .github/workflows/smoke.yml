@@ -1,0 +1,42 @@
+name: smoke-run
+
+# Runs the built container exactly like the judging VM (linux/amd64, mounted
+# /input and /output) so we can see runtime crashes/logs we otherwise can't.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Build image locally (load, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: track2:test
+          build-args: |
+            FIREWORKS_API_KEY=${{ secrets.FIREWORKS_API_KEY }}
+
+      - name: Prepare a one-clip input
+        run: |
+          mkdir -p io/input io/output
+          cat > io/input/tasks.json <<'EOF'
+          [{"task_id":"v1","video_url":"https://storage.googleapis.com/amd-hackathon-clips/1860079-uhd_2560_1440_25fps.mp4","styles":["formal","sarcastic","humorous_tech","humorous_non_tech"]}]
+          EOF
+
+      - name: Run container (show all logs)
+        run: |
+          set +e
+          docker run --rm \
+            -v "$PWD/io/input:/input" -v "$PWD/io/output:/output" \
+            track2:test
+          echo "=== CONTAINER EXIT CODE: $? ==="
+          echo "=== /output/results.json ==="
+          cat io/output/results.json || echo "(no results.json written)"
