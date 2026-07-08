@@ -34,3 +34,6 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE }}:latest
+          # Track 2 injects no key; bake ours from a repo secret (not in the repo).
+          build-args: |
+            FIREWORKS_API_KEY=${{ secrets.FIREWORKS_API_KEY }}
