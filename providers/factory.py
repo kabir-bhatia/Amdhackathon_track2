@@ -18,6 +18,9 @@ def get_vision_provider() -> VisionProvider:
     if name == "local_vlm":
         from .local_vlm import LocalVLMProvider
         return LocalVLMProvider(config.VLM_MODEL_ID)
+    if name == "fireworks":
+        from .fireworks_vision import FireworksVisionProvider
+        return FireworksVisionProvider()
     if name == "hosted":
         from .hosted_vlm import HostedVLMProvider
         return HostedVLMProvider()

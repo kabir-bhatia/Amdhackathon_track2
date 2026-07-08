@@ -32,7 +32,17 @@ MAX_IMAGE_SIDE = int(_get("MAX_IMAGE_SIDE", "768"))
 VLM_MODEL_ID = _get("VLM_MODEL_ID", "Qwen/Qwen2-VL-2B-Instruct")
 GEMMA_MODEL_ID = _get("GEMMA_MODEL_ID", "google/gemma-2-2b-it")
 
-# Fireworks (populated once the coupon is redeemed).
+# Fireworks (API path). Separate model IDs for the vision and styling stages so
+# the non-Gemma and Gemma versions differ only by env config.
 FIREWORKS_API_KEY = _get("FIREWORKS_API_KEY", "")
 FIREWORKS_BASE_URL = _get("FIREWORKS_BASE_URL", "https://api.fireworks.ai/inference/v1")
-FIREWORKS_MODEL_ID = _get("FIREWORKS_MODEL_ID", "")
+# Vision stage: a serverless multimodal model.
+FIREWORKS_VISION_MODEL_ID = _get(
+    "FIREWORKS_VISION_MODEL_ID", "accounts/fireworks/models/qwen3p7-plus"
+)
+# Styling stage: any chat model. Non-Gemma -> gpt-oss-20b; Gemma -> a gemma-* model.
+FIREWORKS_TEXT_MODEL_ID = _get(
+    "FIREWORKS_TEXT_MODEL_ID", "accounts/fireworks/models/gpt-oss-20b"
+)
+# Back-compat alias used by the older FireworksGemmaProvider.
+FIREWORKS_MODEL_ID = _get("FIREWORKS_MODEL_ID", FIREWORKS_TEXT_MODEL_ID)
