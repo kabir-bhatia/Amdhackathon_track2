@@ -14,6 +14,10 @@ import os
 import sys
 import time
 
+# Reduce GPU memory fragmentation (applies to ROCm/HIP too). Set before torch loads.
+os.environ.setdefault("PYTORCH_HIP_ALLOC_CONF", "expandable_segments:True")
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 from agent import config
 from agent.pipeline import CaptioningPipeline
 from providers.factory import get_llm_provider, get_vision_provider

@@ -9,6 +9,8 @@ from typing import List
 
 import numpy as np
 
+from agent import config
+
 from .base import VisionProvider
 from .prompts import VISION_PROMPT
 
@@ -22,14 +24,27 @@ class LocalVLMProvider(VisionProvider):
         self._torch = torch
         self._Image = Image
         self.model_id = model_id
+        self.max_side = config.MAX_IMAGE_SIDE
         dtype = torch.float16 if torch.cuda.is_available() else torch.float32
         self.model = Qwen2VLForConditionalGeneration.from_pretrained(
             model_id, torch_dtype=dtype, device_map="auto"
         )
-        self.processor = AutoProcessor.from_pretrained(model_id)
+        # Bound the visual-token budget so UHD frames can't OOM the GPU.
+        max_pixels = self.max_side * self.max_side
+        self.processor = AutoProcessor.from_pretrained(
+            model_id, min_pixels=256 * 28 * 28, max_pixels=max_pixels
+        )
+
+    def _resize(self, img):
+        w, h = img.size
+        longest = max(w, h)
+        if longest <= self.max_side:
+            return img
+        scale = self.max_side / longest
+        return img.resize((int(w * scale), int(h * scale)), self._Image.BILINEAR)
 
     def describe(self, frames: List["np.ndarray"]) -> str:
-        images = [self._Image.fromarray(f) for f in frames]
+        images = [self._resize(self._Image.fromarray(f)) for f in frames]
         content = [{"type": "image", "image": img} for img in images]
         content.append({"type": "text", "text": VISION_PROMPT})
         messages = [{"role": "user", "content": content}]
@@ -46,4 +61,8 @@ class LocalVLMProvider(VisionProvider):
         desc = self.processor.batch_decode(
             trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=True
         )[0]
+        # Release activation memory so it can't accumulate across clips.
+        del inputs, out, trimmed
+        if self._torch.cuda.is_available():
+            self._torch.cuda.empty_cache()
         return desc.strip()

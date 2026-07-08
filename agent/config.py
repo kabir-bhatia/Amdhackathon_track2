@@ -24,6 +24,9 @@ LLM_PROVIDER = _get("LLM_PROVIDER", "stub")         # stub | local_gemma | firew
 # Frame sampling.
 MAX_FRAMES = int(_get("MAX_FRAMES", "8"))
 SAMPLE_FPS = float(_get("SAMPLE_FPS", "1.0"))
+# Cap the longest side of each frame before it reaches the VLM. UHD frames
+# otherwise expand into an enormous number of visual tokens and OOM the GPU.
+MAX_IMAGE_SIDE = int(_get("MAX_IMAGE_SIDE", "768"))
 
 # Local model IDs (GPU pod).
 VLM_MODEL_ID = _get("VLM_MODEL_ID", "Qwen/Qwen2-VL-2B-Instruct")
