@@ -74,10 +74,14 @@ def main() -> int:
         log.exception("Failed to read %s", config.INPUT_PATH)
         return 1
 
-    # Build providers once (model load is the expensive part).
-    vision = get_vision_provider()
-    llm = get_llm_provider()
-    pipeline = CaptioningPipeline(vision, llm)
+    # Build providers once (model load is the expensive part). A failure here
+    # (e.g. missing key) must NOT crash the container: degrade to fallback
+    # captions so we still emit valid JSON and exit 0.
+    pipeline = None
+    try:
+        pipeline = CaptioningPipeline(get_vision_provider(), get_llm_provider())
+    except Exception:  # noqa: BLE001
+        log.exception("Provider init failed; running in degraded fallback mode.")
 
     results = []
     for task in tasks:
@@ -85,11 +89,12 @@ def main() -> int:
         video_url = task.get("video_url")
         styles = task.get("styles") or list(config.STYLES)
         log.info("Task %s: %d styles", task_id, len(styles))
-        try:
-            captions = pipeline.run(video_url, styles)
-        except Exception:  # noqa: BLE001 - one bad clip must not sink the run
-            log.exception("Task %s failed; emitting fallback captions.", task_id)
-            captions = {s: "A short video clip." for s in styles}
+        captions = {s: "A short video clip." for s in styles}
+        if pipeline is not None:
+            try:
+                captions = pipeline.run(video_url, styles)
+            except Exception:  # noqa: BLE001 - one bad clip must not sink the run
+                log.exception("Task %s failed; emitting fallback captions.", task_id)
         results.append({"task_id": task_id, "captions": captions})
 
     try:
