@@ -40,3 +40,17 @@ jobs:
           echo "=== CONTAINER EXIT CODE: $? ==="
           echo "=== /output/results.json ==="
           cat io/output/results.json || echo "(no results.json written)"
+
+      - name: Verify captions are REAL (not fallback)
+        run: |
+          python - <<'PY'
+          import json, sys
+          d = json.load(open("io/output/results.json"))
+          caps = d[0]["captions"]
+          print("CAPTIONS:", json.dumps(caps, indent=2))
+          fallback = sum(1 for v in caps.values() if v.strip() == "A short video clip.")
+          if fallback:
+              print(f"FALLBACK detected in {fallback}/4 styles -> API path NOT working in-container")
+              sys.exit(1)
+          print("All 4 styles are real captions -> API path works in-container")
+          PY
