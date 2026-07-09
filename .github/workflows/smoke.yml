@@ -3,9 +3,7 @@ name: smoke-run
 # Runs the built container exactly like the judging VM (linux/amd64, mounted
 # /input and /output) so we can see runtime crashes/logs we otherwise can't.
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
+  workflow_dispatch:   # manual only — avoids spending API credits on every push
 
 jobs:
   smoke:
